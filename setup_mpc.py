@@ -12,13 +12,13 @@ class Problem:
     robot_maxVel = 1.0  # m/s
     robot_maxOmega = np.deg2rad(15.0)  # rad/s
     # robot size, start and goal positions
-    robot_size = [0.5, 0.3]  # ellipse, m
+    robot_size = [0.3, 0.3]  # ellipse, m
     robot_pos_start = [-8.0, 0.0]  # m
     robot_theta_start = [np.deg2rad(0.0)]  # rad
     robot_pos_goal = [8.0, 0.0]  # m
     # obstacle size, position,
-    obs_size = [2.0, 2.0]  # m
-    obs_pos = [0.0, -0.1]  # m
+    obs_size = [1.0, 1.0]  # m
+    obs_pos = [5.0, -0.3]  # m
     # MPC settings
     dt = 0.1  # sampling time, s
     N = 40  # horizon length
@@ -27,9 +27,9 @@ class Problem:
     nu = 2  # control dimension
     nparam = 13  # parameter dimension
     # MPC cost terms weights
-    w_pos = 8.0
-    w_input = 0.05
-    w_coll = 0.01
+    w_pos = 5.0
+    w_input = 0.1
+    w_coll = 1e-3
 
 
 # Vector index
