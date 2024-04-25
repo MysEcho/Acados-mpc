@@ -18,7 +18,7 @@ class Problem:
     robot_pos_goal = [8.0, 0.0]  # m
     # obstacle size, position,
     obs_size = [1.0, 1.0]  # m
-    obs_pos = [5.0, -0.3]  # m
+    obs_pos = [-1.0, 0.2]  # m
     # MPC settings
     dt = 0.1  # sampling time, s
     N = 40  # horizon length

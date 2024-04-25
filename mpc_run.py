@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import time
+from time import perf_counter
 from acados_template import AcadosOcp, AcadosOcpSolver
 from setup_mpc import Problem, Index
 from model import mpc_model
@@ -62,7 +63,7 @@ def acados_mpc():
 
     # nlp solver options
     ocp.solver_options.nlp_solver_type = "SQP"
-    ocp.solver_options.nlp_solver_max_iter = 200
+    ocp.solver_options.nlp_solver_max_iter = 100
     ocp.solver_options.nlp_solver_tol_eq = 1e-3
     ocp.solver_options.nlp_solver_tol_ineq = 1e-3
     ocp.solver_options.nlp_solver_tol_comp = 1e-3
@@ -98,23 +99,39 @@ def acados_mpc():
     # plot obejects
 
     # obstalce
+    obs_list = []
+
+    # Elliptical Obstacle
     obs_pos_ellipse = mpatches.Ellipse(
         pr.obs_pos,
         2 * pr.obs_size[0],
         2 * pr.obs_size[1],
         angle=0,
-        fc=(1, 0, 0, 0.4),
-        ec=(1, 0, 0, 0.2),
+        fc=(0, 1, 0, 0.7),
+        ec=(0, 1, 0, 0.2),
     )
-    fig_obs_pos = ax_main.add_artist(obs_pos_ellipse)
+    obs_list.append(obs_pos_ellipse)
+    # Square Obstacle
+    rect_pos = [3.0, -1.4]
+    obs_pos_rectangle = mpatches.Rectangle(
+        rect_pos,
+        2 * pr.obs_size[1],
+        2 * pr.obs_size[0],
+        fc=(0, 1, 0, 0.7),
+        ec=(0, 1, 0, 0.2),
+    )
+    # obs_list.append(obs_pos_rectangle)
+
+    for obs in obs_list:
+        ax_main.add_artist(obs)
     # robot current pos
     robot_pos_ellipse = mpatches.Ellipse(
         pr.robot_pos_start,
         2 * pr.robot_size[0],
         2 * pr.robot_size[1],
         angle=np.rad2deg(pr.robot_theta_start[0]),
-        fc=(0, 0, 1, 0.8),
-        ec=(0, 0, 1, 0.8),
+        fc=(1, 0, 0, 0.8),
+        ec=(1, 0, 0, 0.8),
     )
     fig_robot_pos = ax_main.add_artist(robot_pos_ellipse)
     # robot goal location
@@ -140,9 +157,14 @@ def acados_mpc():
     mpc_x_plan = np.tile(np.array(robot_state_current).reshape((-1, 1)), (1, pr.N))
     mpc_u_plan = np.zeros((pr.nu, pr.N))
 
+    # Rollout Time
+    time_list = []
+
     # loop
-    while n_loop <= max_n_loop:
+    # Taking around 260 iterations to reach goal for now
+    while n_loop <= 260:
         n_loop += 1
+        start_time = perf_counter()
         # Set initial condition
         acados_ocp_solver.constraints_set(0, "lbx", np.array(robot_state_current))
         acados_ocp_solver.constraints_set(0, "ubx", np.array(robot_state_current))
@@ -183,6 +205,9 @@ def acados_mpc():
 
         # Call solver
         status = acados_ocp_solver.solve()
+        stop_time = perf_counter()
+        time_list.append(stop_time - start_time)
+        print("Time Elapsed:", stop_time - start_time)
 
         # Obtain solution
         for iStage in range(0, pr.N):
@@ -220,6 +245,10 @@ def acados_mpc():
         fig_main.canvas.flush_events()
         time.sleep(0.01)
 
+    time_array = np.array(time_list)
+    print(
+        f"Average rollout time: {time_array[1:].mean() * 1000:.2f} ms"
+    )  # Single static obstacle gives avg rollout time of 21.15 ms
     plt.ioff()
     plt.show()
 
